@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-
 class Group(models.Model):
+    id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
     description = models.TextField()

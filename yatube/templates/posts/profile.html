@@ -1,25 +1,13 @@
 {% extends 'base.html' %}
-{% block title %} Профайл пользователя {{ author.get_full_name }} {% endblock %}
+{% block title %} {{ author.get_full_name }} профайл пользователя  {% endblock %}
 {% block content %}
 
-<h1>Все посты пользователя {{ post.author.get_full_name }} </h1>
-<h3>Всего постов: {{ posts }} </h3>
+<h1>Все посты пользователя {{ author.get_full_name }} </h1>
+<h3>Всего постов: {{ count }} </h3>
   {% for post in page_obj %}
     <article>
       <ul>
         <li>
-          Автор: {{ post.author.get_full_name }}
-        </li>
-        <li>
-      {% if post.group %}
-          <li class="list-group-item">
-            Группа: {{ post.group.title }}
-            <a href="{% url 'posts:group_list' post.group.slug %}">
-              {{post.group}}</a>
-          </li>
-        {% else %}
-          <li class="list-group-item">Группа: группа отсутствует</li>
-        {% endif %}
           Дата публикации: {{ post.pub_date|date:"d E Y" }}
         </li>
       </ul>
@@ -28,6 +16,11 @@
       </p>
       <a href="{% url 'posts:post_detail' post.id %}">подробная информация </a>
     </article>
+      {% if post.group %}
+        <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
+      {% else %}
+        <span style="git color: red">Этой публикации нет ни в одной группе</span>
+      {% endif %}
 {% if not forloop.last %}<hr>{% endif %}
   {% endfor %}
 {% include "includes/paginator.html" %}
