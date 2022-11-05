@@ -35,10 +35,12 @@
         <p>
           {{ post.text|truncatewords:30 }}
         </p>
-          <a class="btn btn-primary" href="{% url 'posts:post_edit' post.id %}">
-            редактировать запись
+
+         {% if is_edit %}
+          <a class="btn btn-primary" a href="{% url 'posts:post_edit' post.id %}">
+             Редактировать пост
           </a>
-        </p>
+          {% endif %}
       </article>
     </div>
   </main>
