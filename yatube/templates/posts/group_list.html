@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% block title %} Записи сообщества {{ group }}| Yatube{% endblock %}
+{% block title %} Записи сообщества для группы {{ group.title }} {% endblock %}
 
 {% block content %}
-  <h1>Записи сообщества: Лев Толстой – зеркало русской революции</h1>
-  <p>Группа тайных поклонников графа</p>
+   <h1> {{ group.title }} </h1>
+  <p>{{ group.description }}</p>
   {% for post in page_obj %}
     <article>
       <ul>

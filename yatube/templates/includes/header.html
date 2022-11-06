@@ -23,9 +23,7 @@
           <a class="nav-link {% if view_name  == 'about:tech' %}active{% endif %}"
              href="{% url 'about:tech' %}">Технологии</a>
         </li>
-      </ul>
         {% if user.is_authenticated %}
-      <ul class="nav nav-pills">
         <li class="nav-item">
           <a class="nav-link" href="/create">Новая запись</a>
         </li>
@@ -41,14 +39,14 @@
         </li>
         {% else %}
         <li class="nav-item">
-          <a class="nav-link link-light" href="{% url 'login' %}">Войти</a>
+          <a class="nav-link link-light" href="{% url 'users:login' %}">Войти</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link link-light" href="signup">Регистрация</a>
+          <a class="nav-link link-light" href="{% url 'users:signup' %}">Регистрация</a>
         </li>
         {% endif %}
       </ul>
       {# Конец добавленого в спринте #}
     </div>
   </nav>      
-</header> 
+</header>

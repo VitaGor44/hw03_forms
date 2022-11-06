@@ -20,7 +20,7 @@
       {% if post.group %}
         <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
       {% else %}
-        <span style="git color: green">Этой публикации нет ни в одной группе</span>
+        <span style="git color: red">Этой публикации нет ни в одной группе</span>
       {% endif %}
     {% if not forloop.last %}<hr>{% endif %}
   {% endfor %}
