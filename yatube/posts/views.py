@@ -49,8 +49,10 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     # Здесь код запроса к модели и создание словаря контекста
-    post = get_object_or_404(Post, id=post_id)  # на страницу выводит один пост выбранный по pk
-    count = Post.objects.filter(author=post.author).count()  # выведение общее количество постов пользователя
+    post = get_object_or_404(Post, id=post_id)
+    # на страницу выводит один пост выбранный по pk
+    count = Post.objects.filter(author=post.author).count()
+    # выведение общее количество постов пользователя
     is_edit = post.author == request.user
     context = {
         'post': post,
@@ -86,16 +88,18 @@ def post_create(request):
     return render(request, 'posts/create_post.html', {'form': form, })
 
 
-
 @login_required
 def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-
     if request.user != post.author:
-        return redirect('posts:post_detail', post_id=post_id)
+        return redirect('posts:post_detail',
+                        post_id=post_id
+                        )
     form = PostForm(request.POST or None, instance=post)
     if form.is_valid():
         form.save()
         return redirect('posts:post_detail', post_id=post_id)
 
-    return render(request, 'posts/create_post.html', {'form': form, 'is_edit': True, 'post_id': post_id})
+    return render(request, 'posts/create_post.html',
+                  {'form': form, 'is_edit': True, 'post_id': post_id}
+                  )
