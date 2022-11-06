@@ -1,5 +1,8 @@
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+
+from .forms import PostForm
 from .models import Post, Group, User
 from django.core.mail import send_mail
 
@@ -12,7 +15,7 @@ def index(request):
     paginator = Paginator(post_list, POST_PAGES)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'posts/index.html', {'page_obj': page_obj,})
+    return render(request, 'posts/index.html', {'page_obj': page_obj, })
 
 
 def group_posts(request, slug):
@@ -30,14 +33,15 @@ def group_posts(request, slug):
 
 def profile(request, username):
     # Здесь код запроса к модели и создание словаря контекста
-    author = Post.objects.filter(User, username=username)
-    posts = User.objects.get(Post, author=author).count()
-    paginator = Paginator(posts, POST_PAGES)
+    author = get_object_or_404(User, username=username)
+    post_list = author.posts.all()
+    count = post_list.count()
+    paginator = Paginator(post_list, POST_PAGES)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {
         'page_obj': page_obj,
-        'posts': posts,
+        'count': count,
         'author': author,
     }
     return render(request, 'posts/profile.html', context)
@@ -45,28 +49,53 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     # Здесь код запроса к модели и создание словаря контекста
-    post = get_object_or_404(Post,id=post_id) # на страницу выводит один пост выбранный по pk
-    posts_author = Post.objects.filter(author=post.author).count() # выведение общее количество постов пользователя
+    post = get_object_or_404(Post, id=post_id)  # на страницу выводит один пост выбранный по pk
+    count = Post.objects.filter(author=post.author).count()  # выведение общее количество постов пользователя
+    is_edit = post.author == request.user
     context = {
         'post': post,
-        'posts_author':posts_author,
+        'count': count,
+        'is_edit': is_edit,
     }
     return render(request, 'posts/post_detail.html', context)
+
 
 send_mail(
     'Тема письма',
     'Текст письма.',
     'from@example.com',  # Это поле "От кого"
     ['to@example.com'],  # Это поле "Кому" (можно указать список адресов)
-    fail_silently=False, # Сообщать об ошибках («молчать ли об ошибках?»)
+    fail_silently=False,  # Сообщать об ошибках («молчать ли об ошибках?»)
 )
 
-# @login_required
-# def new_post(request):
-#     form = PostForm(request.POST or None)
-#     if not form.is_valid():
-#         return render(request, 'new.html', {'form': form})
-#     post = form.save(commit=False)
-#     post.author = request.user
-#     post.save()
-#     return redirect("index")
+
+@login_required
+def post_create(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST)
+        print(form)
+        if form.is_valid():
+            author = User.objects.get(pk=request.user.id)
+            print(form.cleaned_data.keys())
+            post = Post(text=form.cleaned_data['text'],
+                        author=author,
+                        group=form.cleaned_data['group'])
+            post.save()
+            return redirect('posts:profile', author.username)
+    form = PostForm()
+    return render(request, 'posts/create_post.html', {'form': form, })
+
+
+
+@login_required
+def post_edit(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+
+    if request.user != post.author:
+        return redirect('posts:post_detail', post_id=post_id)
+    form = PostForm(request.POST or None, instance=post)
+    if form.is_valid():
+        form.save()
+        return redirect('posts:post_detail', post_id=post_id)
+
+    return render(request, 'posts/create_post.html', {'form': form, 'is_edit': True, 'post_id': post_id})
