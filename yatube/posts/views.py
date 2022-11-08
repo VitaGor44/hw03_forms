@@ -10,49 +10,45 @@ from django.core.mail import send_mail
 POST_PAGES = 10
 
 
-def index(request):
-    post_list = Post.objects.all()
-    paginator = Paginator(post_list, POST_PAGES)
+def get_page_context(queryset, request):
+    paginator = Paginator(queryset, POST_PAGES)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'posts/index.html', {'page_obj': page_obj, })
+    return {
+        'paginator': paginator,
+        'page_number': page_number,
+        'page_obj': page_obj,
+    }
+
+
+def index(request):
+    context = get_page_context(Post.objects.all(), request)
+    return render(request, 'posts/index.html', context)
 
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    post_list = group.posts.select_related()
-    paginator = Paginator(post_list, POST_PAGES)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    posts = group.posts.all()[:POST_PAGES]
     context = {
         'group': group,
-        'page_obj': page_obj,
+        'posts': posts,
     }
+    context.update(get_page_context(group.posts.all(), request))
     return render(request, 'posts/group_list.html', context)
 
 
 def profile(request, username):
-    # Здесь код запроса к модели и создание словаря контекста
     author = get_object_or_404(User, username=username)
-    post_list = author.posts.all()
-    count = post_list.count()
-    paginator = Paginator(post_list, POST_PAGES)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
     context = {
-        'page_obj': page_obj,
-        'count': count,
         'author': author,
     }
+    context.update(get_page_context(author.posts.all(), request))
     return render(request, 'posts/profile.html', context)
 
 
 def post_detail(request, post_id):
-    # Здесь код запроса к модели и создание словаря контекста
     post = get_object_or_404(Post, id=post_id)
-    # на страницу выводит один пост выбранный по pk
-    count = Post.objects.filter(author=post.author).count()
-    # выведение общее количество постов пользователя
+    count = post.author.posts.select_related().count()
     is_edit = post.author == request.user
     context = {
         'post': post,
@@ -60,6 +56,7 @@ def post_detail(request, post_id):
         'is_edit': is_edit,
     }
     return render(request, 'posts/post_detail.html', context)
+
 
 
 send_mail(
@@ -73,19 +70,14 @@ send_mail(
 
 @login_required
 def post_create(request):
-    if request.method == 'POST':
-        form = PostForm(request.POST)
-        print(form)
-        if form.is_valid():
-            author = User.objects.get(pk=request.user.id)
-            print(form.cleaned_data.keys())
-            post = Post(text=form.cleaned_data['text'],
-                        author=author,
-                        group=form.cleaned_data['group'])
-            post.save()
-            return redirect('posts:profile', author.username)
-    form = PostForm()
-    return render(request, 'posts/create_post.html', {'form': form, })
+    template = 'posts/create_post.html'
+    form = PostForm(request.POST or None)
+    if form.is_valid():
+        post = form.save(commit=False)
+        post.author = request.user
+        post.save()
+        return redirect('posts:profile', post.author.username)
+    return render(request, template, {'form': form})
 
 
 @login_required
