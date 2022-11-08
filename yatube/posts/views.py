@@ -58,7 +58,6 @@ def post_detail(request, post_id):
     return render(request, 'posts/post_detail.html', context)
 
 
-
 send_mail(
     'Тема письма',
     'Текст письма.',
